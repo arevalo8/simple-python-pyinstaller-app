@@ -8,6 +8,7 @@ pipeline {
                 }
             }
             steps {
+		sh 'apk add --update python'
                 sh 'python -m py_compile sources/add2vals.py sources/calc.py'
             }
         }
