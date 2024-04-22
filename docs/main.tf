@@ -10,13 +10,13 @@ terraform {
 provider "docker" {}
 
 resource "docker_image" "jenkins" {
-  name = "your-custom-jenkins-image:latest"
+  name = "jenkins/jenkins:lts"
   keep_locally = false
 }
 
 resource "docker_container" "jenkins" {
   name  = "jenkins_container"
-  image = "jenkins"
+  image = "jenkins/jenkins:lts"
   ports {
     internal = 8080
     external = 8080
