@@ -8,11 +8,11 @@ resource "docker_image" "jenkins" {
 }
 
 resource "docker_container" "jenkins" {
-  name = "jenkins-container"
-  image = docker_image.jenkins.latest
+  name  = "jenkins_container"
+  image = "jenkins"
   ports {
     internal = 8080
     external = 8080
   }
-  restart = "always"
 }
+
