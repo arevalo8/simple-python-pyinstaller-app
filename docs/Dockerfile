@@ -1,15 +1,16 @@
-# Usamos la imagen oficial de Jenkins como base
-FROM jenkins/jenkins:latest
-
-# Instalamos las herramientas necesarias
+FROM jenkins/jenkins
 USER root
+RUN apt-get update && apt-get install -y lsb-release
+RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
+https://download.docker.com/linux/debian/gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) \
+signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
+https://download.docker.com/linux/debian \
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
-
-# Configuramos Jenkins con los plugins y configuraciones necesarios
-# (Puedes añadir aquí cualquier configuración específica que necesites)
-
-# Cambiamos al usuario Jenkins
+$(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+RUN apt-get update && apt-get install -y docker-ce-cli
 USER jenkins
+RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"

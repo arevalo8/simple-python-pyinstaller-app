@@ -1,6 +1,13 @@
-provider "docker" {
-  host = "tcp://localhost:2375/"
-}
+terraform {
+	required_providers {
+		docker = {
+			source = "kreuzwerker/docker"
+			version = "~> 3.0.1"
+		}
+	}
+}		
+
+provider "docker" {}
 
 resource "docker_image" "jenkins" {
   name = "your-custom-jenkins-image:latest"
