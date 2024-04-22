@@ -1,23 +1,15 @@
-# Utiliza una imagen base de Jenkins LTS (Long Term Support)
-FROM jenkins/jenkins:lts
+# Usamos la imagen oficial de Jenkins como base
+FROM jenkins/jenkins:latest
 
-
-# Instala herramientas adicionales y plugins necesarios
+# Instalamos las herramientas necesarias
 USER root
-RUN apt-get update && \
-    apt-get install -y \
-    curl \
-    wget \
-    git \
-    && apt-get clean
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala plugins de Jenkins usando el archivo de plugins
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+# Configuramos Jenkins con los plugins y configuraciones necesarios
+# (Puedes añadir aquí cualquier configuración específica que necesites)
 
-# Configura opciones adicionales de Jenkins
-# Por ejemplo, si necesitas configurar alguna opción de seguridad o permisos
-#COPY config.xml /var/jenkins_home/config.xml
-
-# Establece el usuario de Jenkins nuevamente
+# Cambiamos al usuario Jenkins
 USER jenkins
