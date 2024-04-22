@@ -1,29 +1,19 @@
 # Configuración del proveedor Docker
-provider "docker" {}
-
-# terraform {
-#  required_providers {
-#    docker = {
-#      source  = "kreuzwerker/docker"
-#      version = "~> 3.0.1"
-#    }
-#  }
-#}
-
 provider "docker" {
-  host    = "tcp://localhost:2375/"
+  host = "unix:///var/run/docker.sock"
 }
 
 resource "docker_image" "jenkins" {
-  name          = "my-jenkins"
-  build         = "./"
-  dockerfile    = "Dockerfile"
+  name   = "my-jenkins"
+  build {
+    context    = "./"
+    dockerfile = "Dockerfile"
+  }
 }
 
 resource "docker_container" "jenkins" {
-  image         = docker_image.jenkins.latest
-  name          = "jenkins-container"
-  restart_policy = "always"
+  image = docker_image.jenkins.name  # Utiliza el atributo "name"
+  name  = "jenkins-container"
   ports {
     internal = 8080
     external = 8080
