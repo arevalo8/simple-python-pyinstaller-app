@@ -1,14 +1,9 @@
 pipeline {
     agent none
-    options {
-        skipStagesAfterUnstable()
-    }
     stages {
         stage('Build') {
             agent {
-                docker {
-                    image 'python:3-alpine'
-                }
+                docker { image 'python:3' }
             }
             steps {
                 sh 'python -m py_compile sources/add2vals.py sources/calc.py'
@@ -17,13 +12,12 @@ pipeline {
         }
         stage('Test') {
             agent {
-                docker {
-                    image 'python:3-alpine'
-                }
+                docker { image 'python:3' }
             }
             steps {
                 sh '''
                     pip install pytest
+                    mkdir -p test-reports
                     pytest --junit-xml=test-reports/results.xml sources/test_calc.py
                 '''
             }
@@ -35,11 +29,10 @@ pipeline {
         }
         stage('Deliver') {
             agent {
-                docker {
-                    image 'cdrx/pyinstaller-linux:python3'
-                }
+                docker { image 'cdrx/pyinstaller-linux:python3' }
             }
             steps {
+                unstash 'compiled-results'
                 sh 'pyinstaller --onefile sources/add2vals.py'
             }
             post {
