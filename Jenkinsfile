@@ -3,9 +3,8 @@ pipeline {
     stages {
         stage('Build') {
             agent {
-		    docker { image 'myjenkins-python' }
+		    docker { image 'myjenkins-python' pull false }
 	    }
-
             steps {
                 sh 'python -m py_compile sources/add2vals.py sources/calc.py'
                 stash(name: 'compiled-results', includes: 'sources/*.py*')
@@ -13,8 +12,8 @@ pipeline {
         }
         stage('Test') {
             agent {
-                docker { image 'python:3' }
-            }
+		    docker { image 'myjenkins-python' pull false }
+	    }
             steps {
                 sh '''
 		    pip install --user pytest
