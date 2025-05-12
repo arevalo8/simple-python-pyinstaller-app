@@ -3,8 +3,11 @@ pipeline {
     stages {
         stage('Build') {
             agent {
-		    docker { image 'myjenkins-python' pull false }
-	    }
+                docker {
+                    image 'myjenkins-python'
+                    alwaysPull false
+                }
+            }
             steps {
                 sh 'python -m py_compile sources/add2vals.py sources/calc.py'
                 stash(name: 'compiled-results', includes: 'sources/*.py*')
@@ -12,15 +15,16 @@ pipeline {
         }
         stage('Test') {
             agent {
-		    docker { image 'myjenkins-python' pull false }
-	    }
+                docker {
+                    image 'myjenkins-python'
+                    alwaysPull false
+                }
+            }
             steps {
                 sh '''
-		    pip install --user pytest
-		    mkdir -p test-reports
-		    python -m pytest --junit-xml=test-reports/results.xml sources/test_calc.py
-		'''
-
+                    mkdir -p test-reports
+                    python -m pytest --junit-xml=test-reports/results.xml sources/test_calc.py
+                '''
             }
             post {
                 always {
@@ -30,7 +34,10 @@ pipeline {
         }
         stage('Deliver') {
             agent {
-                docker { image 'cdrx/pyinstaller-linux:python3' }
+                docker {
+                    image 'cdrx/pyinstaller-linux:python3'
+                    alwaysPull true
+                }
             }
             steps {
                 unstash 'compiled-results'
