@@ -2,19 +2,15 @@ FROM jenkins/jenkins:lts
 
 USER root
 
-# Instalar utilidades necesarias
-RUN apt-get update && apt-get install -y \
-    curl \
-    python3 \
-    python3-pip \
-    lsb-release \
-    git \
-    && apt-get clean
+#Crear alias
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Instalar pytest globalmente (con override del entorno gestionado)
-RUN pip3 install --break-system-packages --no-cache-dir pytest
+# Instalar Python, pip y herramientas necesarias
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip curl && \
+    pip3 install --no-cache-dir pytest pyinstaller --break-system-packages
 
-# Instalar plugin CLI de Jenkins
+# Instalar plugins
 RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"
 
 USER jenkins
