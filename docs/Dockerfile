@@ -2,13 +2,20 @@ FROM jenkins/jenkins:lts
 
 USER root
 
-RUN apt-get update && apt-get install -y lsb-release
-RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
-  https://download.docker.com/linux/debian/gpg
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
-  https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-RUN apt-get update && apt-get install -y docker-ce-cli
+# Instalar utilidades necesarias
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    python3-pip \
+    lsb-release \
+    git \
+    && apt-get clean
+
+# Instalar pytest globalmente (con override del entorno gestionado)
+RUN pip3 install --break-system-packages --no-cache-dir pytest
+
+# Instalar plugin CLI de Jenkins
+RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"
 
 USER jenkins
 
-RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"
