@@ -16,10 +16,11 @@ pipeline {
             }
             steps {
                 sh '''
-                    pip install pytest
-                    mkdir -p test-reports
-                    pytest --junit-xml=test-reports/results.xml sources/test_calc.py
-                '''
+		    pip install --user pytest
+		    mkdir -p test-reports
+		    python -m pytest --junit-xml=test-reports/results.xml sources/test_calc.py
+		'''
+
             }
             post {
                 always {
