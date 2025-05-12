@@ -1,18 +1,136 @@
-# simple-python-pyinstaller-app
+# Jenkins CI/CD con Docker y Terraform
 
-This repository is for the
-[Build a Python app with PyInstaller](https://jenkins.io/doc/tutorials/build-a-python-app-with-pyinstaller/)
-tutorial in the [Jenkins User Documentation](https://jenkins.io/doc/).
+Este proyecto muestra cómo construir una aplicación Python con PyInstaller usando Jenkins, desplegado mediante Docker y automatizado con Terraform.
 
-The repository contains a simple Python application which is a command line tool "add2vals" that outputs the addition of two values. If at least one of the
-values is a string, "add2vals" treats both values as a string and instead
-concatenates the values. The "add2" function in the "calc" library (which
-"add2vals" imports) is accompanied by a set of unit tests. These are tested with pytest to check that this function works as expected and the results are saved
-to a JUnit XML report.
+## Requisitos previos
 
-The delivery of the "add2vals" tool through PyInstaller converts this tool into
-a standalone executable file for Linux, which you can download through Jenkins
-and execute at the command line on Linux machines without Python.
+- Docker
+- Docker Compose
+- Terraform
+- Git
 
-The `jenkins` directory contains an example of the `Jenkinsfile` (i.e. Pipeline)
-you'll be creating yourself during the tutorial.
+## 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/<TU-USUARIO>/simple-python-pyinstaller-app.git
+cd simple-python-pyinstaller-app
+```
+
+## 2. Construir la imagen personalizada de Jenkins
+
+```bash
+docker build -t myjenkins-python docs/
+```
+
+> Asegúrate de que el archivo `docs/Dockerfile` instale `python3`, `pip3`, `pytest` y `pyinstaller`, y cree un symlink a `python`:
+>
+> ```Dockerfile
+> RUN ln -s /usr/bin/python3 /usr/bin/python
+> RUN apt-get update && \
+>     apt-get install -y python3 python3-pip curl && \
+>     pip3 install --no-cache-dir pytest pyinstaller
+> ```
+
+## 3. Infraestructura con Terraform
+
+Dentro del directorio del proyecto (donde esté tu `main.tf`):
+
+```bash
+terraform init
+terraform apply -auto-approve
+```
+
+Esto creará:
+
+- Una red Docker `jenkins`
+- Dos volúmenes Docker para Jenkins y los certificados
+- Un contenedor `jenkins-docker` con Docker-in-Docker
+- Un contenedor `jenkins-blueocean` con tu imagen personalizada `myjenkins-python`
+
+## 4. Acceder a Jenkins
+
+Abre tu navegador en:
+
+```
+http://localhost:8080
+```
+
+Usuario: `admin`
+Contraseña: la encontrarás en:
+
+```bash
+docker exec -it jenkins-blueocean cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+## 5. Configurar el pipeline en Jenkins
+
+1. Crea un nuevo ítem → tipo "Pipeline"
+2. Ponle un nombre, por ejemplo: `simple-python-pyinstaller-app`
+3. En la configuración, selecciona:
+    - **Pipeline → Definition**: `Pipeline script from SCM`
+    - **SCM**: `Git`
+    - **Repository URL**: `https://github.com/<TU-USUARIO>/simple-python-pyinstaller-app.git`
+    - Branch: `main`
+4. Guarda y ejecuta "Build Now"
+
+## 6. Jenkinsfile
+
+Este archivo ya debe estar en la raíz del repositorio (`Jenkinsfile`) y contiene las etapas:
+
+```groovy
+pipeline {
+    agent any
+    options {
+        skipStagesAfterUnstable()
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'python -m py_compile sources/add2vals.py sources/calc.py'
+                stash(name: 'compiled-results', includes: 'sources/*.py*')
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+            }
+            post {
+                always {
+                    junit 'test-reports/results.xml'
+                }
+            }
+        }
+        stage('Deliver') {
+            steps {
+                sh 'pyinstaller --onefile sources/add2vals.py'
+            }
+            post {
+                success {
+                    archiveArtifacts 'dist/add2vals'
+                }
+            }
+        }
+    }
+}
+```
+
+## 7. Probar el artefacto generado
+
+1. Ve a la sección **Artifacts** en Jenkins tras una build exitosa
+2. Descarga el ejecutable `add2vals`
+3. Dale permisos de ejecución y pruébalo:
+
+```bash
+chmod +x add2vals
+./add2vals
+```
+
+## 8. Limpieza del entorno
+
+Para detener y eliminar los contenedores:
+
+```bash
+terraform destroy -auto-approve
+```
+
+---
